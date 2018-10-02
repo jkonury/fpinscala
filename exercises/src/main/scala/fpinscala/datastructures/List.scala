@@ -1,5 +1,7 @@
 package fpinscala.datastructures
 
+import scala.annotation.tailrec
+
 sealed trait List[+A] // `List` data type, parameterized on a type, `A`
 case object Nil extends List[Nothing] // A `List` data constructor representing the empty list
 /* Another data constructor, representing nonempty lists. Note that `tail` is another `List[A]`,
@@ -23,7 +25,7 @@ object List { // `List` companion object. Contains functions for creating and wo
     if (as.isEmpty) Nil
     else Cons(as.head, apply(as.tail: _*))
 
-  val x = List(1,2,3,4,5) match {
+  val x1: Int = List(1,2,3,4,5) match {
     case Cons(x, Cons(2, Cons(4, _))) => x
     case Nil => 42
     case Cons(x, Cons(y, Cons(3, Cons(4, _)))) => x + y
@@ -44,25 +46,83 @@ object List { // `List` companion object. Contains functions for creating and wo
     }
 
   def sum2(ns: List[Int]) =
-    foldRight(ns, 0)((x,y) => x + y)
+    foldRight(ns, 0)((x,y) => {
+      println(s"$x $y")
+      x + y
+    })
 
   def product2(ns: List[Double]) =
     foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
 
-  def tail[A](l: List[A]): List[A] = ???
+  def tail[A](l: List[A]): List[A] =
+    l match {
+      case Nil => List()
+      case Cons(_, t) => t
+      case _ => List()
+    }
 
-  def setHead[A](l: List[A], h: A): List[A] = ???
+  def setHead[A](l: List[A], h: A): List[A] =
+    l match {
+      case Nil => List(h)
+      case Cons(_, t) => Cons(h, t)
+      case _ => List(h)
+    }
 
-  def drop[A](l: List[A], n: Int): List[A] = ???
+  def drop[A](l: List[A], n: Int): List[A] =
 
-  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = ???
+    if (n > 0) {
+      l match {
+        case Nil => List()
+        case Cons(_, _) => drop(tail(l), n - 1)
+        case _ => List()
+      }
+    } else {
+      l
+    }
 
-  def init[A](l: List[A]): List[A] = ???
 
-  def length[A](l: List[A]): Int = ???
+  def dropWhile[A](l: List[A], f: A => Boolean): List[A] =
+    l match {
+      case Nil => l
+      case Cons(h, t) => if (f(h)) dropWhile(t, f) else l
+    }
 
-  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = ???
+  def init[A](l: List[A]): List[A] =
+    l match {
+      case Nil => l
+      case Cons(_, Nil) => Nil
+      case Cons(h, t) => Cons(h, init(t))
+    }
+
+  def length[A](xs: List[A]): Int =
+    foldRight(xs, 0)((_,y) => y + 1)
+
+//def foldRight[A,B](as: List[A], z: B)(f: (A, B) => B): B = // Utility functions
+  @tailrec
+  def foldLeft[A,B] (as: List[A], z: B)(f: (B, A) => B): B =
+    as match {
+      case Nil => z
+      case Cons(x, xs) =>
+//        println(xs)
+        foldLeft(xs, f(z, x))(f)
+    }
+  
+  def sum3(ns: List[Int]) =
+    foldLeft(ns, 0)((x, y) => {
+//      println(s"$x $y")
+      x + y
+    })
+
+  def product3(ns: List[Double]) =
+    foldLeft(ns, 1.0)(_ * _)
 
   def map[A,B](l: List[A])(f: A => B): List[B] = ???
+
+//  @tailrec
+  def addPairwise(a: List[Int], b: List[Int]): List[Int] = (a,b) match {
+    case (Nil, _) => Nil
+    case (_, Nil) => Nil
+    case (Cons(h1,t1), Cons(h2,t2)) => Cons(h1+h2, addPairwise(t1,t2))
+  }
 }
